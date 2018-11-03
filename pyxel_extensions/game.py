@@ -10,7 +10,7 @@ class Game:
 
         self.store = Store(initial_state, reducer)
 
-        self.scene = None
+        self.scene = self.refresh_scene()
         self.store.subscribe(self.change_scene)
 
         self.reloader = Reloader(hot_modules)
@@ -34,7 +34,10 @@ class Game:
 
     def change_scene(self, old_state, new_state):
         if new_state['__scene__'] != old_state['__scene__']:
-            self.scene = self.build_scene(new_state['__scene__'])
+            self.scene = self.refresh_scene()
+
+    def refresh_scene(self):
+        return self.build_scene(self.store.state['__scene__'])
 
     def build_scene(self, name):
         return self.scenes_map[name](self.store)
