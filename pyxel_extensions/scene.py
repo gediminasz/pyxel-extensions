@@ -7,7 +7,6 @@ from .store import Store
 class Scene:
     store: Store
 
-    @property
     @classmethod
-    def name(cls):
+    def get_name(cls):
         return f'{cls.__module__}.{cls.__name__}'

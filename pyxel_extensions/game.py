@@ -2,15 +2,22 @@ import pyxel
 
 from .reloader import Reloader
 from .store import Store
+from .selectors import get_scene
 
 
 class Game:
-    def __init__(self, initial_state, reducer, scenes, hot_modules=()):
+    def __init__(self, initial_state, scenes, initial_scene, hot_modules=()):
         self.init_pyxel()
 
-        self.store = Store(initial_state, reducer)
+        initial_state = {
+            '__pyxel_extensions__': {
+                'scene': initial_scene.get_name()
+            },
+            **initial_state
+        }
+        self.store = Store(initial_state)
 
-        self.scenes_map = {scene.name: scene for scene in scenes}
+        self.scenes_map = {scene.get_name(): scene for scene in scenes}
 
         self.scene = self.refresh_scene()
         self.store.subscribe(self.change_scene)
@@ -26,7 +33,7 @@ class Game:
     def update(self):
         if pyxel.btnp(pyxel.KEY_F1):
             self.reloader.reload()
-            self.scene = self.build_scene(self.store.state['__scene__'])
+            self.scene = self.refresh_scene()
 
         self.scene.update()
 
@@ -35,11 +42,11 @@ class Game:
         self.scene.draw()
 
     def change_scene(self, old_state, new_state):
-        if new_state['__scene__'] != old_state['__scene__']:
-            self.scene = self.refresh_scene()
+        if get_scene(new_state) != get_scene(old_state):
+            self.scene = self.build_scene(get_scene(new_state))
 
     def refresh_scene(self):
-        return self.build_scene(self.store.state['__scene__'])
+        return self.build_scene(get_scene(self.store.state))
 
     def build_scene(self, name):
         return self.scenes_map[name](self.store)
