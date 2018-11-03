@@ -1,13 +1,10 @@
-import reprlib
-
-
 class Store:
     def __init__(self, initial_state):
         self.state = initial_state
         self.subscribers = []
 
     def dispatch(self, action):
-        print(action.__name__)
+        print(repr(action))
 
         new_state = action(self.state)
 
