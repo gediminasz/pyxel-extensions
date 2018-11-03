@@ -5,10 +5,12 @@ from .store import Store
 
 
 class Game:
-    def __init__(self, initial_state, reducer, hot_modules=()):
+    def __init__(self, initial_state, reducer, scenes, hot_modules=()):
         self.init_pyxel()
 
         self.store = Store(initial_state, reducer)
+
+        self.scenes_map = {scene.name: scene for scene in scenes}
 
         self.scene = self.refresh_scene()
         self.store.subscribe(self.change_scene)
@@ -41,7 +43,3 @@ class Game:
 
     def build_scene(self, name):
         return self.scenes_map[name](self.store)
-
-    @property
-    def scenes_map(self):
-        return {}
