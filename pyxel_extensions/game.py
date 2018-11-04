@@ -6,7 +6,7 @@ from .selectors import get_scene
 
 
 class Game:
-    def __init__(self, initial_state, scenes, initial_scene, hot_modules=()):
+    def __init__(self, initial_state, initial_scene, hot_modules=()):
         self.init_pyxel()
 
         initial_state = {
@@ -16,8 +16,6 @@ class Game:
             **initial_state
         }
         self.store = Store(initial_state)
-
-        self.scenes_map = {scene.get_name(): scene for scene in scenes}
 
         self.scene = self.refresh_scene()
         self.store.subscribe(self.change_scene)
@@ -50,3 +48,11 @@ class Game:
 
     def build_scene(self, name):
         return self.scenes_map[name](self.store)
+
+    @property
+    def scenes_map(self):
+        return {scene.get_name(): scene for scene in self.get_scenes()}
+
+    def get_scenes(self):
+        """Must return an iterable of scene classes."""
+        raise NotImplementedError
