@@ -10,3 +10,9 @@ class Scene:
     @classmethod
     def get_name(cls):
         return f'{cls.__module__}.{cls.__name__}'
+
+    def update(self):
+        raise NotImplementedError
+
+    def draw(self):
+        raise NotImplementedError
