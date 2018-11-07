@@ -17,10 +17,11 @@ class Game:
         }
         self.store = Store(initial_state)
 
-        self.scene = self.refresh_scene()
+        self.refresh_scene()
         self.store.subscribe(self.change_scene)
 
-        self.reloader = Reloader(hot_modules)
+        self.reloader = Reloader(hot_modules, on_reload=self.refresh_scene)
+        self.reloader.watch()
 
     def init_pyxel(self):
         pyxel.init(160, 120)
@@ -29,9 +30,10 @@ class Game:
         pyxel.run(self.update, self.draw)
 
     def update(self):
+        self.reloader.update()
+
         if pyxel.btnp(pyxel.KEY_F1):
-            self.reloader.reload()
-            self.scene = self.refresh_scene()
+            self.reloader.reload_all()
 
         self.scene.update()
 
@@ -44,7 +46,7 @@ class Game:
             self.scene = self.build_scene(get_scene(new_state))
 
     def refresh_scene(self):
-        return self.build_scene(get_scene(self.store.state))
+        self.scene = self.build_scene(get_scene(self.store.state))
 
     def build_scene(self, name):
         return self.scenes_map[name](self.store)
