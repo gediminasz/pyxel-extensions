@@ -26,8 +26,10 @@ class Reloader:
     def update(self):
         try:
             modified_module = self.channel.get_nowait()
-            self.reload_module(modified_module)
-            self.on_reload()
+            self.reload_all()
+            # FIXME seems like watchdog does not allow multiple handlers for the same directory
+            # self.reload_module(modified_module)
+            # self.on_reload()
         except Empty:
             pass
 
