@@ -1,4 +1,4 @@
-from queue import Queue, Empty
+from collections import deque
 import importlib
 import os
 
@@ -10,7 +10,7 @@ class Reloader:
     def __init__(self, hot_modules, on_reload):
         self.hot_modules = hot_modules
         self.on_reload = on_reload
-        self.channel = Queue()
+        self.channel = deque()
 
     def watch(self):
         observer = Observer()
@@ -22,12 +22,12 @@ class Reloader:
 
     def update(self):
         try:
-            modified_path = self.channel.get_nowait()
+            modified_path = self.channel.popleft()
             modified_module = self.get_module_by_path(modified_path)
             if modified_module:
                 self.reload_module(modified_module)
                 self.on_reload()
-        except Empty:
+        except IndexError:
             pass
 
     def get_module_by_path(self, path):
@@ -50,5 +50,5 @@ class ChannelNotifier(FileSystemEventHandler):
         self.channel = channel
 
     def on_modified(self, event):
-        print('on_modified')
-        self.channel.put(event.src_path)
+        if event.src_path not in self.channel:
+            self.channel.append(event.src_path)
