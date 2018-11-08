@@ -2,8 +2,8 @@ from queue import Queue, Empty
 import importlib
 import os
 
+from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
-from watchdog.events import PatternMatchingEventHandler
 
 
 class Reloader:
@@ -14,24 +14,26 @@ class Reloader:
 
     def watch(self):
         observer = Observer()
-        for hot_module in self.hot_modules:
-            path = hot_module.__file__
-            handler = FileModifiedHandler(
-                on_modified = lambda: self.channel.put(hot_module),
-                patterns=(path,)
-            )
-            observer.schedule(handler, os.path.dirname(path))
+        handler = ChannelNotifier(self.channel)
+        directories = {os.path.dirname(hot_module.__file__) for hot_module in self.hot_modules}
+        for directory in directories:
+            observer.schedule(handler, directory)
         observer.start()
 
     def update(self):
         try:
-            modified_module = self.channel.get_nowait()
-            self.reload_all()
-            # FIXME seems like watchdog does not allow multiple handlers for the same directory
-            # self.reload_module(modified_module)
-            # self.on_reload()
+            modified_path = self.channel.get_nowait()
+            modified_module = self.get_module_by_path(modified_path)
+            if modified_module:
+                self.reload_module(modified_module)
+                self.on_reload()
         except Empty:
             pass
+
+    def get_module_by_path(self, path):
+        for hot_module in self.hot_modules:
+            if hot_module.__file__ == path:
+                return hot_module
 
     def reload_all(self):
         for hot_module in self.hot_modules:
@@ -43,10 +45,10 @@ class Reloader:
         importlib.reload(module)
 
 
-class FileModifiedHandler(PatternMatchingEventHandler):
-    def __init__(self, on_modified, *args, **kwargs):
-        self._on_modified = on_modified
-        super().__init__(*args, **kwargs)
+class ChannelNotifier(FileSystemEventHandler):
+    def __init__(self, channel):
+        self.channel = channel
 
     def on_modified(self, event):
-        self._on_modified()
+        print('on_modified')
+        self.channel.put(event.src_path)
